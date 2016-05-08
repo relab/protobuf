@@ -177,6 +177,8 @@ type marshalto struct {
 	protoPkg    generator.Single
 	sortKeysPkg generator.Single
 	mathPkg     generator.Single
+	ioPkg       generator.Single
+	fastRPCPkg  generator.Single
 	localName   string
 	unsafe      bool
 }
@@ -1182,6 +1184,8 @@ func (p *marshalto) Generate(file *generator.FileDescriptor) {
 	}
 	p.unsafePkg = p.NewImport("unsafe")
 	p.errorsPkg = p.NewImport("errors")
+	p.ioPkg = p.NewImport("io")
+	p.fastRPCPkg = p.NewImport("github.com/relab/epaxos/fastrpc")
 
 	for _, message := range file.Messages() {
 		if message.DescriptorProto.GetOptions().GetMapEntry() {
@@ -1206,21 +1210,27 @@ func (p *marshalto) Generate(file *generator.FileDescriptor) {
 		}
 		p.atleastOne = true
 
-		p.P(`func (m *`, ccTypeName, `) Marshal() (data []byte, err error) {`)
+		p.P(`func (m *`, ccTypeName, `) New() `, p.fastRPCPkg.Use(), `.Serializable {`)
+		p.In()
+		p.P(`return new(`, ccTypeName, `)`)
+		p.Out()
+		p.P(`}`)
+
+		p.P(`func (m *`, ccTypeName, `) Marshal(w `, p.ioPkg.Use(), `.Writer) {`)
 		p.In()
 		if gogoproto.IsProtoSizer(file.FileDescriptorProto, message.DescriptorProto) {
 			p.P(`size := m.ProtoSize()`)
 		} else {
 			p.P(`size := m.Size()`)
 		}
-		p.P(`data = make([]byte, size)`)
+		p.P(`data := make([]byte, size)`)
 		p.P(`n, err := m.MarshalTo(data)`)
 		p.P(`if err != nil {`)
 		p.In()
-		p.P(`return nil, err`)
+		p.P(`panic(err)`)
 		p.Out()
 		p.P(`}`)
-		p.P(`return data[:n], nil`)
+		p.P(`w.Write(data[:n])`)
 		p.Out()
 		p.P(`}`)
 		p.P(``)

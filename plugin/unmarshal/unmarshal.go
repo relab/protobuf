@@ -1019,8 +1019,17 @@ func (p *unmarshal) Generate(file *generator.FileDescriptor) {
 		}
 		rfCount := len(rfMap)
 
-		p.P(`func (m *`, ccTypeName, `) Unmarshal(data []byte) error {`)
+		p.P(`func (m *`, ccTypeName, `) Unmarshal(r io.Reader, size int) error {`)
 		p.In()
+
+		p.P(`data := make([]byte, size)`)
+		p.P(`_, err := io.ReadFull(r, data)`)
+		p.P(`if err != nil {`)
+		p.In()
+		p.P(`panic("unmarshal read full err")`)
+		p.Out()
+		p.P(`}`)
+
 		if rfCount > 0 {
 			p.P(`var hasFields [`, strconv.Itoa(1+(rfCount-1)/64), `]uint64`)
 		}
