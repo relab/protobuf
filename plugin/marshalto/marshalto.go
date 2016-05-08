@@ -1210,11 +1210,17 @@ func (p *marshalto) Generate(file *generator.FileDescriptor) {
 		}
 		p.atleastOne = true
 
-		p.P(`func (m *`, ccTypeName, `) New() `, p.fastRPCPkg.Use(), `.Serializable {`)
+		if ccTypeName == "Command" {
+			p.P(`func (m *`, ccTypeName, `) New() *Command {`)
+		} else {
+			p.P(`func (m *`, ccTypeName, `) New() `, p.fastRPCPkg.Use(), `.Serializable {`)
+		}
+
 		p.In()
 		p.P(`return new(`, ccTypeName, `)`)
 		p.Out()
 		p.P(`}`)
+		p.P()
 
 		p.P(`func (m *`, ccTypeName, `) Marshal(w `, p.ioPkg.Use(), `.Writer) {`)
 		p.In()
