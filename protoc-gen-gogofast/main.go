@@ -42,6 +42,8 @@ func main() {
 	vanity.ForEachFile(files, vanity.TurnOnSizerAll)
 	vanity.ForEachFile(files, vanity.TurnOnUnmarshalerAll)
 
+	vanity.ForEachFile(files, vanity.TurnOffGoEnumPrefixAll)
+
 	resp := command.Generate(req)
 	command.Write(resp)
 }
